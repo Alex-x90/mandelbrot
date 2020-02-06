@@ -1,0 +1,79 @@
+<!DOCTYTPE html>
+<head>
+</head>
+<body>
+    <canvas id="canvas"></canvas>
+    <script type="text/javascript">
+      var useCanvasSize = true;
+      var size = 300;
+      var scale = 225;
+      var panX = 0.7495;
+      var panY = 0.1102;
+      var sharpness = 500;
+
+      // interesting values:
+      // panX=2,panY=1.5,scale=(1/3)
+      // panX=0.7,panY=0.6,scale=(29/6)
+      // panX=0.7495,panY=0.1102,scale=225,sharpness=500
+
+      // a butchered hsl to rgb converter made specifically for this program so it'll run faster
+      function hslToRgb(hue) {
+         var tempRgb = [hue + 0.33, hue, hue - 0.33];
+         var output = [0, 0, 0];
+         for (var x = 0; x < 3; x++) {
+            if (tempRgb[x] > 1) {
+               tempRgb[x]--;
+            } else if (tempRgb[x] < 0) {
+               tempRgb[x]++;
+            }
+            if (tempRgb[x] < 0.16) {
+               output[x] = 5.4 * tempRgb[x];
+            } else if (tempRgb[x] < 0.5) {
+               output[x] = 0.9;
+            } else if (tempRgb[x] < 0.66) {
+               output[x] = 3.6 - 5.4 * tempRgb[x];
+            } else {
+               output[x] = 0;
+            }
+            output[x] *= 255;
+         }
+         return output;
+      }
+
+      // function defining a mandelbrot
+      function mandelbrot(x, y) {
+         var c = [0, 0];
+         for (var i = 1; i < sharpness; i++) {
+            if (Math.abs(c[0]) > 2) {
+               return hslToRgb(i / sharpness);
+            }
+            c = [Math.pow(c[0], 2) - Math.pow(c[1], 2) + x, 2 * c[0] * c[1] + y];
+         }
+         return[0, 0, 0];
+      }
+      //gets canvas object to allow image generation
+      function init(){
+        var canvas = document.getElementById('canvas');
+        var ctx = canvas.getContext('2d');
+        var body = document.getElementsByTagName("BODY")[0];
+        //picks to use given size or window size
+        if (useCanvasSize) {
+           if (body.offsetHeight > body.offsetWidth) {
+              size = body.offsetWidth;
+           } else {
+              size = body.offsetHeight;
+           }
+        }
+        canvas.width=size;
+        canvas.height=size;
+        scale *= size;
+        //generates mandelbrot for each pixel and colors it
+        for (var i = 0; i < Math.pow(size,2); i++) {
+          var colors = mandelbrot(Math.floor(i/size) / scale - panX, i%size / scale - panY);
+          ctx.fillStyle = "rgba("+colors[0]+","+colors[1]+","+colors[2]+","+1+")";
+          ctx.fillRect( i/size, i%size, 1, 1 );
+        }
+    }
+      window.addEventListener('load', init);
+    </script>
+</body>
